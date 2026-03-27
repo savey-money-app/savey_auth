@@ -8,7 +8,7 @@ export const auth = betterAuth({
     usePlural: true,
   }),
 
-  baseURL: process.env.AUTH_BASE_URL ?? 'http://localhost:3001',
+  baseURL: process.env.AUTH_BASE_URL ?? 'http://localhost:3002',
   secret: process.env.JWT_SECRET!,
 
   emailAndPassword: {

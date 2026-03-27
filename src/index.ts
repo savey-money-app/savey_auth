@@ -109,4 +109,4 @@ app.get('/health', (c) => c.json({ status: 'ok' }));
 // (OAuth callbacks, session management, CSRF, etc.)
 app.on(['GET', 'POST'], '/api/auth/**', (c) => auth.handler(c.req.raw));
 
-export default { port: 3001, fetch: app.fetch };
+export default { port: 3002, fetch: app.fetch };

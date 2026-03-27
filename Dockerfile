@@ -11,6 +11,6 @@ FROM base AS runner
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-EXPOSE 3001
+EXPOSE 3002
 
 CMD ["bun", "run", "src/index.ts"]

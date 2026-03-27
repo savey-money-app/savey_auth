@@ -1,0 +1,32 @@
+services:
+  savey_auth:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      AUTH_BASE_URL: ${AUTH_BASE_URL:-http://localhost:3001}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      APPLE_CLIENT_ID: ${APPLE_CLIENT_ID:-}
+      APPLE_CLIENT_SECRET: ${APPLE_CLIENT_SECRET:-}
+    networks:
+      - dokploy-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.savey-auth.rule=PathPrefix(`/api/auth`)"
+      - "traefik.http.routers.savey-auth.entrypoints=web,websecure"
+      - "traefik.http.services.savey-auth.loadbalancer.server.port=3001"
+
+networks:
+  dokploy-network:
+    external: true

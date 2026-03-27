@@ -5,8 +5,9 @@
   "scripts": {
     "dev": "bun run --watch src/index.ts",
     "start": "bun run src/index.ts",
-    "migrate": "bun run src/migrate.ts",
-    "migrate-users": "bun run scripts/migrate-users.ts"
+    "setup-schema": "bun run scripts/setup-schema.ts",
+    "migrate-users": "bun run scripts/migrate-users.ts",
+    "setup": "bun run scripts/setup-schema.ts && bun run scripts/migrate-users.ts"
   },
   "dependencies": {
     "better-auth": "^1.2.7",

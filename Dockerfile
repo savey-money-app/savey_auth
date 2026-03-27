@@ -13,4 +13,5 @@ COPY . .
 
 EXPOSE 3002
 
-CMD ["bun", "run", "src/index.ts"]
+# Run schema setup (idempotent — safe to run on every start) then start the server
+CMD ["sh", "-c", "bun run scripts/setup-schema.ts && bun run src/index.ts"]

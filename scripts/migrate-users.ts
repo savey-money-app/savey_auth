@@ -7,7 +7,7 @@
  * Automatically creates the savey_auth schema and tables if they don't exist.
  *
  * Usage:
- *   DATABASE_URL=... JWT_SECRET=... bun run scripts/migrate-users.ts
+ *   DATABASE_URL=... bun run scripts/migrate-users.ts
  */
 import postgres from 'postgres';
 
@@ -26,8 +26,9 @@ async function ensureSchema(sql: ReturnType<typeof postgres>) {
   await sql`CREATE SCHEMA IF NOT EXISTS savey_auth`;
   await sql`SET search_path TO savey_auth`;
 
+  // Better Auth native pg adapter uses SINGULAR table names
   await sql`
-    CREATE TABLE IF NOT EXISTS users (
+    CREATE TABLE IF NOT EXISTS "user" (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL DEFAULT '',
       email TEXT NOT NULL UNIQUE,
@@ -39,24 +40,11 @@ async function ensureSchema(sql: ReturnType<typeof postgres>) {
   `;
 
   await sql`
-    CREATE TABLE IF NOT EXISTS sessions (
-      id TEXT PRIMARY KEY,
-      expires_at TIMESTAMP NOT NULL,
-      token TEXT NOT NULL UNIQUE,
-      created_at TIMESTAMP NOT NULL DEFAULT now(),
-      updated_at TIMESTAMP NOT NULL DEFAULT now(),
-      ip_address TEXT,
-      user_agent TEXT,
-      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE
-    )
-  `;
-
-  await sql`
-    CREATE TABLE IF NOT EXISTS accounts (
+    CREATE TABLE IF NOT EXISTS account (
       id TEXT PRIMARY KEY,
       account_id TEXT NOT NULL,
       provider_id TEXT NOT NULL,
-      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      user_id TEXT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
       access_token TEXT,
       refresh_token TEXT,
       id_token TEXT,
@@ -71,7 +59,20 @@ async function ensureSchema(sql: ReturnType<typeof postgres>) {
   `;
 
   await sql`
-    CREATE TABLE IF NOT EXISTS verifications (
+    CREATE TABLE IF NOT EXISTS session (
+      id TEXT PRIMARY KEY,
+      expires_at TIMESTAMP NOT NULL,
+      token TEXT NOT NULL UNIQUE,
+      created_at TIMESTAMP NOT NULL DEFAULT now(),
+      updated_at TIMESTAMP NOT NULL DEFAULT now(),
+      ip_address TEXT,
+      user_agent TEXT,
+      user_id TEXT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE
+    )
+  `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS verification (
       id TEXT PRIMARY KEY,
       identifier TEXT NOT NULL,
       value TEXT NOT NULL,
@@ -104,9 +105,9 @@ async function main() {
 
   for (const user of users) {
     try {
-      // search_path is already set to savey_auth — no schema prefix needed
+      // search_path is savey_auth — table name is "user" (singular, quoted)
       const inserted = await sql`
-        INSERT INTO users (id, email, name, email_verified, created_at, updated_at)
+        INSERT INTO "user" (id, email, name, email_verified, created_at, updated_at)
         VALUES (
           ${user.id},
           ${user.email},
@@ -127,7 +128,7 @@ async function main() {
 
       // Insert credential account with the existing bcrypt hash
       await sql`
-        INSERT INTO accounts (
+        INSERT INTO account (
           id, account_id, provider_id, user_id, password, created_at, updated_at
         )
         VALUES (

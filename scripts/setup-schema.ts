@@ -1,7 +1,9 @@
 /**
  * Creates the savey_auth Postgres schema and all Better Auth tables.
- * Must be run before the service starts for the first time and before
- * migrate-users.ts.
+ * Idempotent — safe to run on every container start.
+ *
+ * Better Auth's native pg adapter uses SINGULAR table names:
+ *   user, session, account, verification
  *
  * Usage:
  *   DATABASE_URL=... bun run scripts/setup-schema.ts
@@ -15,15 +17,13 @@ async function main() {
 
   console.log('Creating savey_auth schema...');
   await sql`CREATE SCHEMA IF NOT EXISTS savey_auth`;
-
-  // Set search path for this session
   await sql`SET search_path TO savey_auth`;
 
   console.log('Creating Better Auth tables...');
 
-  // users
+  // Better Auth native pg adapter expects SINGULAR names
   await sql`
-    CREATE TABLE IF NOT EXISTS users (
+    CREATE TABLE IF NOT EXISTS "user" (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL DEFAULT '',
       email TEXT NOT NULL UNIQUE,
@@ -34,9 +34,8 @@ async function main() {
     )
   `;
 
-  // sessions
   await sql`
-    CREATE TABLE IF NOT EXISTS sessions (
+    CREATE TABLE IF NOT EXISTS session (
       id TEXT PRIMARY KEY,
       expires_at TIMESTAMP NOT NULL,
       token TEXT NOT NULL UNIQUE,
@@ -44,17 +43,16 @@ async function main() {
       updated_at TIMESTAMP NOT NULL DEFAULT now(),
       ip_address TEXT,
       user_agent TEXT,
-      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE
+      user_id TEXT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE
     )
   `;
 
-  // accounts (OAuth providers + credential)
   await sql`
-    CREATE TABLE IF NOT EXISTS accounts (
+    CREATE TABLE IF NOT EXISTS account (
       id TEXT PRIMARY KEY,
       account_id TEXT NOT NULL,
       provider_id TEXT NOT NULL,
-      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      user_id TEXT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
       access_token TEXT,
       refresh_token TEXT,
       id_token TEXT,
@@ -68,9 +66,8 @@ async function main() {
     )
   `;
 
-  // verifications
   await sql`
-    CREATE TABLE IF NOT EXISTS verifications (
+    CREATE TABLE IF NOT EXISTS verification (
       id TEXT PRIMARY KEY,
       identifier TEXT NOT NULL,
       value TEXT NOT NULL,
@@ -79,6 +76,12 @@ async function main() {
       updated_at TIMESTAMP NOT NULL DEFAULT now()
     )
   `;
+
+  // Drop the old plural tables if they exist from a previous failed attempt
+  await sql`DROP TABLE IF EXISTS verifications CASCADE`;
+  await sql`DROP TABLE IF EXISTS accounts CASCADE`;
+  await sql`DROP TABLE IF EXISTS sessions CASCADE`;
+  await sql`DROP TABLE IF EXISTS users CASCADE`;
 
   console.log('Schema setup complete.');
   await sql.end();

@@ -1,17 +1,16 @@
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
+import { Pool } from 'pg';
 
-const connectionString = process.env.DATABASE_URL!;
-
-// Set search_path so all Better Auth tables land in the savey_auth schema.
-// postgres-js passes these as connection-level SET commands on every new connection.
-export const client = postgres(connectionString, {
+// pg Pool with search_path set to savey_auth schema for all connections.
+// Better Auth uses this pool directly — no Drizzle needed.
+export const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
   max: 10,
-  idle_timeout: 20,
-  connect_timeout: 10,
-  connection: {
-    search_path: 'savey_auth',
-  },
+  idleTimeoutMillis: 20000,
+  connectionTimeoutMillis: 10000,
 });
 
-export const db = drizzle(client);
+// Set search_path on every new connection so Better Auth tables
+// are resolved inside the savey_auth schema.
+pool.on('connect', (client) => {
+  client.query("SET search_path TO savey_auth").catch(() => {});
+});

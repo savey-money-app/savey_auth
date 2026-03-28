@@ -1,12 +1,8 @@
 import { betterAuth } from 'better-auth';
-import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { db } from './db';
+import { pool } from './db';
 
 export const auth = betterAuth({
-  database: drizzleAdapter(db, {
-    provider: 'pg',
-    usePlural: true,
-  }),
+  database: pool,
 
   baseURL: process.env.AUTH_BASE_URL ?? 'http://localhost:3002',
   secret: process.env.JWT_SECRET!,

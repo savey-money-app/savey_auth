@@ -26,48 +26,48 @@ async function ensureSchema(sql: ReturnType<typeof postgres>) {
   await sql`CREATE SCHEMA IF NOT EXISTS savey_auth`;
   await sql`SET search_path TO savey_auth`;
 
-  // Better Auth native pg adapter uses SINGULAR table names
+  // Better Auth native pg adapter expects camelCase column names
   await sql`
     CREATE TABLE IF NOT EXISTS "user" (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL DEFAULT '',
       email TEXT NOT NULL UNIQUE,
-      email_verified BOOLEAN NOT NULL DEFAULT false,
+      "emailVerified" BOOLEAN NOT NULL DEFAULT false,
       image TEXT,
-      created_at TIMESTAMP NOT NULL DEFAULT now(),
-      updated_at TIMESTAMP NOT NULL DEFAULT now()
+      "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
+      "updatedAt" TIMESTAMP NOT NULL DEFAULT now()
     )
   `;
 
   await sql`
     CREATE TABLE IF NOT EXISTS account (
       id TEXT PRIMARY KEY,
-      account_id TEXT NOT NULL,
-      provider_id TEXT NOT NULL,
-      user_id TEXT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
-      access_token TEXT,
-      refresh_token TEXT,
-      id_token TEXT,
-      access_token_expires_at TIMESTAMP,
-      refresh_token_expires_at TIMESTAMP,
+      "accountId" TEXT NOT NULL,
+      "providerId" TEXT NOT NULL,
+      "userId" TEXT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+      "accessToken" TEXT,
+      "refreshToken" TEXT,
+      "idToken" TEXT,
+      "accessTokenExpiresAt" TIMESTAMP,
+      "refreshTokenExpiresAt" TIMESTAMP,
       scope TEXT,
       password TEXT,
-      created_at TIMESTAMP NOT NULL DEFAULT now(),
-      updated_at TIMESTAMP NOT NULL DEFAULT now(),
-      UNIQUE (provider_id, account_id)
+      "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
+      "updatedAt" TIMESTAMP NOT NULL DEFAULT now(),
+      UNIQUE ("providerId", "accountId")
     )
   `;
 
   await sql`
     CREATE TABLE IF NOT EXISTS session (
       id TEXT PRIMARY KEY,
-      expires_at TIMESTAMP NOT NULL,
+      "expiresAt" TIMESTAMP NOT NULL,
       token TEXT NOT NULL UNIQUE,
-      created_at TIMESTAMP NOT NULL DEFAULT now(),
-      updated_at TIMESTAMP NOT NULL DEFAULT now(),
-      ip_address TEXT,
-      user_agent TEXT,
-      user_id TEXT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE
+      "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
+      "updatedAt" TIMESTAMP NOT NULL DEFAULT now(),
+      "ipAddress" TEXT,
+      "userAgent" TEXT,
+      "userId" TEXT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE
     )
   `;
 
@@ -76,9 +76,9 @@ async function ensureSchema(sql: ReturnType<typeof postgres>) {
       id TEXT PRIMARY KEY,
       identifier TEXT NOT NULL,
       value TEXT NOT NULL,
-      expires_at TIMESTAMP NOT NULL,
-      created_at TIMESTAMP NOT NULL DEFAULT now(),
-      updated_at TIMESTAMP NOT NULL DEFAULT now()
+      "expiresAt" TIMESTAMP NOT NULL,
+      "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
+      "updatedAt" TIMESTAMP NOT NULL DEFAULT now()
     )
   `;
 
@@ -105,9 +105,8 @@ async function main() {
 
   for (const user of users) {
     try {
-      // search_path is savey_auth — table name is "user" (singular, quoted)
       const inserted = await sql`
-        INSERT INTO "user" (id, email, name, email_verified, created_at, updated_at)
+        INSERT INTO "user" (id, email, name, "emailVerified", "createdAt", "updatedAt")
         VALUES (
           ${user.id},
           ${user.email},
@@ -126,10 +125,9 @@ async function main() {
         continue;
       }
 
-      // Insert credential account with the existing bcrypt hash
       await sql`
         INSERT INTO account (
-          id, account_id, provider_id, user_id, password, created_at, updated_at
+          id, "accountId", "providerId", "userId", password, "createdAt", "updatedAt"
         )
         VALUES (
           ${crypto.randomUUID()},
@@ -140,7 +138,7 @@ async function main() {
           ${user.created_at},
           NOW()
         )
-        ON CONFLICT (provider_id, account_id) DO NOTHING
+        ON CONFLICT ("providerId", "accountId") DO NOTHING
       `;
 
       migrated++;

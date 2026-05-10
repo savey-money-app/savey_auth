@@ -40,7 +40,7 @@ app.post('/api/auth/sign-in/email', async (c) => {
       return c.json({ message: 'Invalid email or password' }, 401);
     }
 
-    const token = await signJWT({ sub: result.user.id, email: result.user.email }, JWT_SECRET);
+    const token = await signJWT({ sub: result.user.id, email: result.user.email, name: result.user.name ?? '' }, JWT_SECRET);
     return c.json({ token, user: { id: result.user.id, email: result.user.email, name: result.user.name } });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Login failed';
@@ -74,7 +74,7 @@ app.post('/api/auth/sign-up/email', async (c) => {
       return c.json({ message: 'Registration failed' }, 400);
     }
 
-    const token = await signJWT({ sub: result.user.id, email: result.user.email }, JWT_SECRET);
+    const token = await signJWT({ sub: result.user.id, email: result.user.email, name: result.user.name ?? '' }, JWT_SECRET);
     return c.json({ token, user: { id: result.user.id, email: result.user.email, name: result.user.name } }, 201);
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Registration failed';

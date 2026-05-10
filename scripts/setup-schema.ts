@@ -19,18 +19,6 @@ async function main() {
   await sql`CREATE SCHEMA IF NOT EXISTS savey_auth`;
   await sql`SET search_path TO savey_auth`;
 
-  // Drop old tables (any schema — handles renamed/re-ordered columns).
-  // Order matters: dependents first.
-  await sql`DROP TABLE IF EXISTS session CASCADE`;
-  await sql`DROP TABLE IF EXISTS account CASCADE`;
-  await sql`DROP TABLE IF EXISTS verification CASCADE`;
-  await sql`DROP TABLE IF EXISTS "user" CASCADE`;
-  // Also clean up any old plural-named tables
-  await sql`DROP TABLE IF EXISTS sessions CASCADE`;
-  await sql`DROP TABLE IF EXISTS accounts CASCADE`;
-  await sql`DROP TABLE IF EXISTS verifications CASCADE`;
-  await sql`DROP TABLE IF EXISTS users CASCADE`;
-
   console.log('Creating Better Auth tables...');
 
   await sql`

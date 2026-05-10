@@ -1,16 +1,13 @@
 import { Pool } from 'pg';
 
-// pg Pool with search_path set to savey_auth schema for all connections.
-// Better Auth uses this pool directly — no Drizzle needed.
+// Pass search_path as a startup parameter via `options`.
+// This is sent to Postgres at connection time (not via SET), so it survives
+// Neon's PgBouncer transaction-mode multiplexing where SET is session-scoped
+// and gets lost between transactions.
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  options: '-c search_path=savey_auth',
   max: 10,
   idleTimeoutMillis: 20000,
   connectionTimeoutMillis: 10000,
-});
-
-// Set search_path on every new connection so Better Auth tables
-// are resolved inside the savey_auth schema.
-pool.on('connect', (client) => {
-  client.query("SET search_path TO savey_auth").catch(() => {});
 });

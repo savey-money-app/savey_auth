@@ -10,6 +10,12 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,
+    password: {
+      // Use bcrypt so migrated FastAPI hashes (also bcrypt) verify correctly.
+      // Bun.password.verify auto-detects the algorithm from the hash prefix.
+      hash: (password) => Bun.password.hash(password, { algorithm: 'bcrypt', cost: 10 }),
+      verify: ({ hash, password }) => Bun.password.verify(password, hash),
+    },
   },
 
   socialProviders: {

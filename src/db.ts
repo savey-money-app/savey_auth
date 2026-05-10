@@ -1,13 +1,20 @@
 import { Pool } from 'pg';
 
-// Pass search_path as a startup parameter via `options`.
-// This is sent to Postgres at connection time (not via SET), so it survives
-// Neon's PgBouncer transaction-mode multiplexing where SET is session-scoped
-// and gets lost between transactions.
+// Neon's pooler (PgBouncer transaction mode) blocks search_path as a startup
+// parameter and doesn't preserve SET across transactions. Use the unpooled
+// direct connection so search_path works correctly. The auth service has low
+// concurrency so direct connections are fine.
+function unpooledUrl(url: string): string {
+  return url.replace('-pooler.', '.');
+}
+
 export const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  options: '-c search_path=savey_auth',
-  max: 10,
+  connectionString: unpooledUrl(process.env.DATABASE_URL!),
+  max: 5,
   idleTimeoutMillis: 20000,
   connectionTimeoutMillis: 10000,
+});
+
+pool.on('connect', (client) => {
+  client.query('SET search_path TO savey_auth').catch(() => {});
 });

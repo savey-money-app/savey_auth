@@ -8,8 +8,9 @@
  *   DATABASE_URL=... bun run scripts/migrate-users.ts
  */
 import postgres from 'postgres';
+import { requiredEnv } from '../src/env';
 
-const DATABASE_URL = process.env.DATABASE_URL!;
+const DATABASE_URL = requiredEnv('DATABASE_URL');
 
 interface SaveyUser {
   id: string;

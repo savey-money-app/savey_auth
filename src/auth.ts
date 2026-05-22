@@ -1,11 +1,12 @@
 import { betterAuth } from 'better-auth';
 import { pool } from './db';
+import { requiredEnv } from './env';
 
 export const auth = betterAuth({
   database: pool,
 
   baseURL: process.env.AUTH_BASE_URL ?? 'http://localhost:3002',
-  secret: process.env.JWT_SECRET!,
+  secret: requiredEnv('JWT_SECRET'),
 
   emailAndPassword: {
     enabled: true,

@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { auth } from './auth';
+import { requiredEnv } from './env';
 import { signJWT } from './jwt';
 
 const app = new Hono();
@@ -17,7 +18,7 @@ app.use(
   }),
 );
 
-const JWT_SECRET = process.env.JWT_SECRET!;
+const JWT_SECRET = requiredEnv('JWT_SECRET');
 
 /**
  * Sign-in wrapper: calls Better Auth then returns HS256 JWT for FastAPI.

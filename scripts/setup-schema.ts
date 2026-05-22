@@ -9,8 +9,9 @@
  *   DATABASE_URL=... bun run scripts/setup-schema.ts
  */
 import postgres from 'postgres';
+import { requiredEnv } from '../src/env';
 
-const DATABASE_URL = process.env.DATABASE_URL!;
+const DATABASE_URL = requiredEnv('DATABASE_URL');
 
 async function main() {
   const sql = postgres(DATABASE_URL);

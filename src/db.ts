@@ -1,4 +1,5 @@
 import { Pool } from 'pg';
+import { requiredEnv } from './env';
 
 // Neon's pooler (PgBouncer transaction mode) blocks search_path as a startup
 // parameter and doesn't preserve SET across transactions. Use the unpooled
@@ -9,7 +10,7 @@ function unpooledUrl(url: string): string {
 }
 
 export const pool = new Pool({
-  connectionString: unpooledUrl(process.env.DATABASE_URL!),
+  connectionString: unpooledUrl(requiredEnv('DATABASE_URL')),
   max: 5,
   idleTimeoutMillis: 20000,
   connectionTimeoutMillis: 10000,
